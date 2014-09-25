@@ -1,7 +1,16 @@
-class Enum
+class EnumConstant
+	constructor: (@value, @marker) ->
 
-	constructor: (fields) ->
-		if !fields?.length or !Array.isArray fields then throw 'Fields must be an array of Strings'
-		fields.forEach (field) => @[field.toUpperCase()] = field.toUpperCase()
+class Enum
+	@EnumConstant: EnumConstant
+	@marker
+
+	constructor: (fields...) ->
+		@marker = this
+
+		fields.forEach (field) =>
+			if not typeof field == "string" then throw new Error("fields must be provided as an array of strings")
+			fieldName = field.toUpperCase()
+			@[fieldName] = new EnumConstant(fieldName, @marker)
 
 module.exports = Enum

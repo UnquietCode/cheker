@@ -25,15 +25,15 @@ protectedFunction("1", 2)
 
 #return
 
-
-
-
-
+Country = new (class extends Enum
+	constructor: () -> super("USA", "Canada")
+)
 
 IPerson = {
 	name: "string"
 	age: 0
 	alive: "boolean"
+	country: Country
 }
 
 
@@ -42,12 +42,17 @@ IPerson = {
 Person = {
 	name: "Ben"
 	age: 27
-	alive: 1
+	alive: true
+
+	country: Country.USA
+
 	happy: false
 }
 
-console.log checker.not(IPerson, Person)
-checker.assert.not(IPerson, Person)
+#console.log checker.not(IPerson, Person)
+checker.assert.is(IPerson, Person)
+
+
 
 return
 
