@@ -224,9 +224,12 @@ describe 'Chekers Tests', ->
 		func = (string, number) -> "#{string} -- #{number}"
 
 		# failing
+		pFunc = checker.protect("", "", 0, func)
+
 		try
-			checker.protect("", "", 0, func)(1, 2)
+			pFunc(1, 2)
 			expect.fail()
+
 
 		# with application
 		applied = checker.apply("", "", 0, func)("str")
@@ -234,7 +237,7 @@ describe 'Chekers Tests', ->
 		expect(result).to.be("str -- 4")
 
 		try
-			applied("")
+			applied(true)
 			expect.fail()
 
 
