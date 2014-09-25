@@ -64,7 +64,7 @@ describe 'Chekers Tests', ->
 			expect.fail()
 
 
-	it 'it should be possible to use custom types in function guards', ->
+	it 'should be possible to use custom types in function guards', ->
 		called = false
 
 		showPerson = (person) ->
@@ -84,17 +84,34 @@ describe 'Chekers Tests', ->
 			showPerson({})
 			expect.fail()
 
+	it 'should be possible to use anonymous specs in function guards', ->
+		called = false
+
+		_post = (obj) ->
+			called = true
+			expect(typeof obj.to).to.be('string')
+			expect(typeof obj.from).to.be('string')
+			return "To: #{obj.to}\nFrom: #{obj.from}"
+
+		post = checker.protect(_post, {to: 'string', from: 'string' })
+		post({to: "Mom", from: "Bobby"})
+		expect(called).to.be.ok()
+
+		try
+			post({to: "Santa Claus"})
+			expect.fail()
+
 
 	Country = new (class extends Enum
 		constructor: () -> super("USA", "Canada")
 	)
 
-	it 'it should be possible to create enums', ->
+	it 'should be possible to create enums', ->
 		expect(Country.USA?.value).to.be("USA")
 		expect(Country.Denmark).to.be(undefined)
 
 
-	it 'it should be possible to use enums in specs', ->
+	it 'should be possible to use enums in specs', ->
 
 		PersonSpec = {
 			name: ""
@@ -129,42 +146,38 @@ describe 'Chekers Tests', ->
 
 
 
+	it 'should provide support for basic primitives', ->
+		tests = [1, 2.0, "3", true, null, undefined, () -> ""]
+		methods = ["null", "undefined", "number", "string", "boolean", "array", "function", "regex", "regEx"]
+
+		test = (value, expected) ->
+			for method in methods
+
+				if method is expected
+					expect(checker.is[method](value)).to.be.ok()
+					expect(checker.not[method](value)).to.not.be.ok()
+				else
+					expect(checker.not[method](value)).to.be.ok()
+					expect(checker.is[method](value)).to.not.be.ok()
+
+		test 1, "number"
+		test 2.0, "number"
+		test "3", "string"
+		test "", "string"
+		test true, "boolean"
+		test null, "null"
+		test undefined, "undefined"
+		test((->), "function")
 
 
 
+## TODO enum for primitives?
+
+## TODO function return types?
+	## could put a check in the guard proxy before returning
 
 
 ## TODO real tests
 ## TODO handling of functions with regular object parameters (should work, zero values in the spec
 	# "object"
 # {}
-
-
-###
-
-
-_postal = (obj) ->
-	console.log "To: #{obj.to}\nFrom: #{obj.from}"
-
-post = checker.protect(_postal, {to: 'string', from: 'string' })
-
-
-
-
-
-
-tests = [1, 2.0, "3", true, null, undefined, () -> ""]
-
-for test in tests
-	console.log("test value is '#{test}'")
-	console.log checker.is.null(test)
-	console.log checker.is.undefined(test)
-	console.log checker.is.number(test)
-	console.log checker.is.string(test)
-	console.log checker.is.boolean(test)
-	console.log checker.is.object(test)
-	console.log checker.is.array(test)
-	console.log checker.is.function(test)
-	console.log checker.is.regEx(test)
-	console.log("\n\n")
-###
