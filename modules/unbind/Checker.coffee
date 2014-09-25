@@ -116,7 +116,7 @@ _not = matcher(false, false)
 assert_is = matcher(true, true, assertHelper(true))
 assert_not = matcher(false, true, assertHelper(false))
 
-protect = (f, types...) ->
+protect = (types..., f) ->
 	assert_is.function f
 
 	# return a function which checks all arguments
@@ -165,7 +165,7 @@ protect = (f, types...) ->
   			.string(test)
 
   	# guard a function with automatic type checks
-  	.protect(function, [types])
+  	.protect([types], function)
 
 ###
 module.exports = {

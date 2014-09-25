@@ -23,7 +23,7 @@ describe 'Chekers Tests', ->
 			expect(typeof string).to.be("string")
 			expect(typeof number).to.be("number")
 
-		protectedFunction = checker.protect(myLameFunction, "string", "number")
+		protectedFunction = checker.protect("string", "number", myLameFunction)
 		protectedFunction("1", 2)
 		expect(called).to.be.ok()
 
@@ -51,6 +51,7 @@ describe 'Chekers Tests', ->
 	}
 
 	it 'should support checking of interface specifications', ->
+		expect(checker.is({}, {})).to.be.ok()
 		expect(checker.is(IPerson, Person)).to.be.ok()
 
 		# anonymous spec
@@ -72,7 +73,7 @@ describe 'Chekers Tests', ->
 			expect(person.name).to.be("Ben")
 			expect(person.age).to.be(27)
 
-		showPerson = checker.protect(showPerson, IPerson)
+		showPerson = checker.protect(IPerson, showPerson)
 		showPerson(Person)
 		expect(called).to.be.ok()
 
@@ -94,7 +95,7 @@ describe 'Chekers Tests', ->
 			expect(typeof obj.from).to.be('string')
 			return "To: #{obj.to}\nFrom: #{obj.from}"
 
-		post = checker.protect(_post, {to: 'string', from: 'string' })
+		post = checker.protect({to: 'string', from: 'string' }, _post)
 		post({to: "Mom", from: "Bobby"})
 		expect(called).to.be.ok()
 
@@ -146,6 +147,22 @@ describe 'Chekers Tests', ->
 		expect(checker.is(PersonSpec, person4)).to.not.be.ok()
 
 
+	it 'should work for regular object parameters', ->
+		called = false
+
+		func = (obj) ->
+			called = true
+			expect(obj.yes).to.be(true)
+
+		pFunc = checker.protect("object", func)
+		pFunc({yes:yes})
+		expect(called).to.be.ok()
+
+		called = false
+		pFunc = checker.protect({}, func)
+		pFunc({yes:yes})
+		expect(called).to.be.ok()
+
 
 	it 'should provide support for basic primitives', ->
 		methods = ["null", "undefined", "number", "string", "boolean", "array", "function", "regex", "regEx"]
@@ -180,7 +197,4 @@ describe 'Chekers Tests', ->
 
 ## TODO protectAndApply to check once, then apply the arguments
 
-## TODO real tests
-## TODO handling of functions with regular object parameters (should work, zero values in the spec
-	# "object"
-# {}
+
