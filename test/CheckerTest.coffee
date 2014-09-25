@@ -220,11 +220,24 @@ describe 'Chekers Tests', ->
 
 
 
+	it 'should be possible to guard once, and then apply the arguments', ->
+		func = (string, number) -> "#{string} -- #{number}"
+
+		# failing
+		try
+			checker.protect("", "", 0, func)(1, 2)
+			expect.fail()
+
+		# with application
+		applied = checker.apply("", "", 0, func)("str")
+		result = applied(4)
+		expect(result).to.be("str -- 4")
+
+		try
+			applied("")
+			expect.fail()
+
+
+
+
 ## TODO enum for primitives?
-
-## TODO function return types?
-	## could put a check in the guard proxy before returning
-
-## TODO protectAndApply to check once, then apply the arguments
-
-

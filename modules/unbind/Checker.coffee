@@ -108,13 +108,48 @@ assertHelper = (match) -> (result, expected, actual) ->
 
 protectHelper = (types) -> (result, expected, actual) ->
 	if not result
-		throw new Error("function signature mismatch: expected [#{types}]")
+		realTypes = getTypeString(type) for type, i in types
+		throw new Error("function signature mismatch: expected [#{realTypes}]")
 
 
 _is = matcher(true, false)
 _not = matcher(false, false)
 assert_is = matcher(true, true, assertHelper(true))
 assert_not = matcher(false, true, assertHelper(false))
+
+
+getTypeString = (type) ->
+	typeName = (typeof type).toLowerCase()
+
+	# check for known string types
+	if typeName == "string"
+		stringType = type.toLowerCase()
+
+		if stringType in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
+			return stringType
+
+
+	return typeName
+
+
+# confirm that the type matches our expectations
+matchArgumentType = (arg, type, types) ->
+	helper = matcher(true, true, protectHelper(types))
+	typeName = getTypeString(type)
+
+	if typeName == "object"
+
+		# handle 'any object' type
+		if (typeof type).toLowerCase() == "string"
+			equalsInterface(arg, {}, true)
+
+		# otherwise, use the full object
+		else
+			equalsInterface(arg, type, true)
+	else
+		helper[typeName](arg)
+
+
 
 protect = (rType, types..., f) ->
 	assert_is.function f
@@ -131,36 +166,53 @@ protect = (rType, types..., f) ->
 				throw new Error("too many arguments")
 
 			# confirm that the type matches our expectations
-			helper = matcher(true, true, protectHelper(types))
-			type = types[i]
-			typeName = (typeof type).toLowerCase()
-
-			if typeName == "string"
-				helper[type](args[i])
-			else if typeName == "object"
-				equalsInterface(args[i], type, true)
-			else
-				helper[typeName](args[i])
+			matchArgumentType(args[i], types[i], types)
 
 
 		# everything was ok for arguments, so execute the function
 		result = f.apply(this, args)
-		rTypeName = (typeof rType).toLowerCase()
+		rTypeName = getTypeString(rType)
 
 		# force return undefined
 		if rTypeName == "undefined"
 			return undefined
 
 		# check the result type
-		if rTypeName == "string"
-			matcher(true, true)[rType](result)
-		else if rTypeName == "object"
+		if rTypeName == "object"
 			equalsInterface(result, rType, true)
 		else
 			matcher(true, true)[rTypeName](result)
 
 		# ok, so return the value
 		return result
+
+
+
+apply = (rType, types..., originalFunction) ->
+
+	# return a function which checks arguments once,
+	# then returns a pre-applied function
+	return (appliedArgs...) ->
+
+		# get the relevant portion of the types
+		appliedTypes = types[0...appliedArgs.length]
+
+		# check them
+		for type, i in appliedTypes
+			matchArgumentType(appliedArgs[i], type, types)
+
+
+		# ok, so return an applied protected function
+		remainingTypes = types[appliedArgs.length...types.length]
+
+		return protect(rType, remainingTypes..., (args...) ->
+
+			# combine the args
+			args = appliedArgs.concat(args)
+
+			# execute the original function
+			return originalFunction.apply(this, args)
+		)
 
 
 ###
@@ -182,7 +234,11 @@ protect = (rType, types..., f) ->
   			.string(test)
 
   	# guard a function with automatic type checks
-  	.protect([types], function)
+  	.protect(returnType, argumentTypes..., function)
+
+  	# check some arguments, apply them, then check the remaining
+  	# arguments as normal with each invocation of the function
+  	.apply(returnType, argumentTypes..., function)
 
 ###
 module.exports = {
@@ -194,4 +250,5 @@ module.exports = {
 		not: assert_not
 
 	protect: protect
+	apply: apply
 }
