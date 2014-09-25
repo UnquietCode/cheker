@@ -116,7 +116,7 @@ _not = matcher(false, false)
 assert_is = matcher(true, true, assertHelper(true))
 assert_not = matcher(false, true, assertHelper(false))
 
-protect = (types..., f) ->
+protect = (rType, types..., f) ->
 	assert_is.function f
 
 	# return a function which checks all arguments
@@ -143,8 +143,25 @@ protect = (types..., f) ->
 				helper[typeName](args[i])
 
 
-		# everything was ok, so execute the function
-		f.apply(this, args)
+		# everything was ok for arguments, so execute the function
+		result = f.apply(this, args)
+		rTypeName = (typeof rType).toLowerCase()
+
+		# force return undefined
+		if rTypeName == "undefined"
+			return undefined
+
+		# check the result type
+		if rTypeName == "string"
+			matcher(true, true)[rType](result)
+		else if rTypeName == "object"
+			equalsInterface(result, rType, true)
+		else
+			matcher(true, true)[rTypeName](result)
+
+		# ok, so return the value
+		return result
+
 
 ###
 

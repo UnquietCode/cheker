@@ -23,7 +23,7 @@ describe 'Chekers Tests', ->
 			expect(typeof string).to.be("string")
 			expect(typeof number).to.be("number")
 
-		protectedFunction = checker.protect("string", "number", myLameFunction)
+		protectedFunction = checker.protect(undefined, "string", "number", myLameFunction)
 		protectedFunction("1", 2)
 		expect(called).to.be.ok()
 
@@ -73,7 +73,7 @@ describe 'Chekers Tests', ->
 			expect(person.name).to.be("Ben")
 			expect(person.age).to.be(27)
 
-		showPerson = checker.protect(IPerson, showPerson)
+		showPerson = checker.protect(undefined, IPerson, showPerson)
 		showPerson(Person)
 		expect(called).to.be.ok()
 
@@ -95,13 +95,43 @@ describe 'Chekers Tests', ->
 			expect(typeof obj.from).to.be('string')
 			return "To: #{obj.to}\nFrom: #{obj.from}"
 
-		post = checker.protect({to: 'string', from: 'string' }, _post)
+		post = checker.protect("string", {to: 'string', from: 'string' }, _post)
 		post({to: "Mom", from: "Bobby"})
 		expect(called).to.be.ok()
 
 		try
 			post({to: "Santa Claus"})
 			expect.fail()
+
+
+	it 'should guard against invalid return values', ->
+		called = false
+
+		func = checker.protect('string', () ->
+			called = true
+			return 1234
+		)
+
+		try
+			func()
+			expect.fail()
+
+		expect(called).to.be.ok()
+
+
+	it 'should be possible to specify return types in function guards', ->
+		called = false
+
+		func = checker.protect('string', {firstName:"", lastName:""}, (person) ->
+			called = true
+			return "Hello #{person.firstName} #{person.lastName}!"
+		)
+
+		greeting = func({firstName: "Samantha", lastName: "Borges"})
+		expect(called).to.be.ok()
+		expect(typeof greeting).to.be("string")
+		expect(greeting).to.be("Hello Samantha Borges!")
+
 
 
 	Country = new (class extends Enum
@@ -154,12 +184,12 @@ describe 'Chekers Tests', ->
 			called = true
 			expect(obj.yes).to.be(true)
 
-		pFunc = checker.protect("object", func)
+		pFunc = checker.protect(undefined, "object", func)
 		pFunc({yes:yes})
 		expect(called).to.be.ok()
 
 		called = false
-		pFunc = checker.protect({}, func)
+		pFunc = checker.protect(undefined, {}, func)
 		pFunc({yes:yes})
 		expect(called).to.be.ok()
 
