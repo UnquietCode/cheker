@@ -147,7 +147,6 @@ describe 'Chekers Tests', ->
 
 
 	it 'should provide support for basic primitives', ->
-		tests = [1, 2.0, "3", true, null, undefined, () -> ""]
 		methods = ["null", "undefined", "number", "string", "boolean", "array", "function", "regex", "regEx"]
 
 		test = (value, expected) ->
@@ -160,14 +159,16 @@ describe 'Chekers Tests', ->
 					expect(checker.not[method](value)).to.be.ok()
 					expect(checker.is[method](value)).to.not.be.ok()
 
-		test 1, "number"
-		test 2.0, "number"
-		test "3", "string"
-		test "", "string"
-		test true, "boolean"
-		test null, "null"
-		test undefined, "undefined"
-		test((->), "function")
+		test(x[0], x[1]) for x in [
+			[1, "number"]
+			[2.0, "number"]
+			["3", "string"]
+			["", "string"]
+			[true, "boolean"]
+			[null, "null"]
+			[undefined, "undefined"]
+			[(->), "function"]
+		]
 
 
 
