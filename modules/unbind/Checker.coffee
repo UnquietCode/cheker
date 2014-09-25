@@ -1,9 +1,14 @@
 Enum = require('./Enum')
 log = (x) -> console.log(x)
 
+
 equalsInterface = (object, spec, assert) ->
 	assert_is.object(spec)
 	assert_is.object(object)
+
+	throwOrReturn = (message) ->
+		if assert then throw new Error(message)
+		else return false
 
 	# for every property of the interface
 	for k,v of spec
@@ -11,16 +16,15 @@ equalsInterface = (object, spec, assert) ->
 
 		# handle enums by unwrapping them
 		if v instanceof Enum
+			log "#{k} is an Enum"
 			sameMarker = objectValue.marker != undefined && v.marker == objectValue.marker
 
 			if not sameMarker
-				if assert
-					throw new Error("Object does not conform to spec. Property '#{k}' should be of the correct Enum type.")
-				else return false
+				return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of the correct Enum type.")
 
 		# check that the object has the property at all
 		if objectValue == undefined
-			throw new Error("Object does not conform to spec. Missing property '#{k}'.")
+			return throwOrReturn("Object does not conform to spec. Missing property '#{k}'.")
 
 		# get the value type
 		vType = if v == null then "null" else typeof v
@@ -51,10 +55,11 @@ equalsInterface = (object, spec, assert) ->
 
 		# handle failure
 		if actualType != expectedType
+			return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of type #{expectedType}.")
 
-			if assert
-				throw new Error("Object does not conform to spec. Property '#{k}' should be of type #{expectedType}.")
-			else return false
+
+		# all done
+		return true
 
 
 matcher = (match, assert, cb) ->
@@ -68,11 +73,14 @@ matcher = (match, assert, cb) ->
 
 	func = (spec, object) ->
 		result = equalsInterface(object, spec, assert)
+		log "raw result is #{result}"
+		result = if match then result else !result
 
-		if result and !match and assert
-			throw new Error("expected object to not match spec")
-
-		return result
+		if !result and assert
+			matchStr = if match then "match" else "not match"
+			throw new Error("expected object to #{matchStr} spec")
+		else
+			return result
 
 
 	func.null = (test) ->
@@ -115,6 +123,8 @@ protect = (f, types...) ->
 	# return a function which checks all arguments
 	# for consistency
 	return (args...) ->
+
+		# check every property in the spec
 		for i in [0...args.length]
 
 			# ensure that enough types were provided
@@ -123,9 +133,19 @@ protect = (f, types...) ->
 
 			# confirm that the type matches our expectations
 			helper = matcher(true, true, protectHelper(types))
-			correctType = types[i].toLowerCase()
-			helper[correctType](args[i])
+			type = types[i]
+			typeName = (typeof type).toLowerCase()
 
+			if typeName == "string"
+				helper[type](args[i])
+			else if typeName == "object"
+				equalsInterface(args[i], type, true)
+			else
+				helper[typeName](args[i])
+
+
+		# everything was ok, so execute the function
+		f.apply(this, args)
 
 ###
 
