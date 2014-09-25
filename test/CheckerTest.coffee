@@ -84,6 +84,7 @@ describe 'Chekers Tests', ->
 			showPerson({})
 			expect.fail()
 
+
 	it 'should be possible to use anonymous specs in function guards', ->
 		called = false
 
@@ -141,8 +142,8 @@ describe 'Chekers Tests', ->
 		expect(checker.is(PersonSpec, person1)).to.be.ok()
 		expect(checker.not(PersonSpec, person1)).to.not.be.ok()
 		expect(checker.is(PersonSpec, person2)).to.not.be.ok()
-#		expect(checker.is(PersonSpec, person3)).to.not.be.ok()
-#		expect(checker.is(PersonSpec, person4)).to.not.be.ok()
+		expect(checker.is(PersonSpec, person3)).to.not.be.ok()
+		expect(checker.is(PersonSpec, person4)).to.not.be.ok()
 
 
 
@@ -177,6 +178,7 @@ describe 'Chekers Tests', ->
 ## TODO function return types?
 	## could put a check in the guard proxy before returning
 
+## TODO protectAndApply to check once, then apply the arguments
 
 ## TODO real tests
 ## TODO handling of functions with regular object parameters (should work, zero values in the spec

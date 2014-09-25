@@ -16,7 +16,6 @@ equalsInterface = (object, spec, assert) ->
 
 		# handle enums by unwrapping them
 		if v instanceof Enum
-			log "#{k} is an Enum"
 			sameMarker = objectValue.marker != undefined && v.marker == objectValue.marker
 
 			if not sameMarker
@@ -57,9 +56,10 @@ equalsInterface = (object, spec, assert) ->
 		if actualType != expectedType
 			return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of type #{expectedType}.")
 
+	#-end
 
-		# all done
-		return true
+	# all done
+	return true
 
 
 matcher = (match, assert, cb) ->
@@ -73,7 +73,6 @@ matcher = (match, assert, cb) ->
 
 	func = (spec, object) ->
 		result = equalsInterface(object, spec, assert)
-		log "raw result is #{result}"
 		result = if match then result else !result
 
 		if !result and assert
