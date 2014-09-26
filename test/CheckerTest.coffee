@@ -1,8 +1,8 @@
 expect = require('expect.js');
 
-Enum = require('../modules/unbind/Enum')
-cheker = require('../modules/unbind/Checker');
-
+Enum = require('../modules/cheker/Enum')
+Primitives = require('../modules/cheker/Primitives');
+cheker = require('../modules/cheker/Checker');
 
 describe 'Enum Tests', ->
 
@@ -29,6 +29,15 @@ describe 'Enum Tests', ->
 		Type3A = new Type3()
 		Type3B = new Type3()
 		expect(Type3A.A.marker).to.be(Type3B.A.marker)
+
+
+
+	it 'should be possible to create enums', ->
+		Country = new (class extends Enum
+			constructor: () -> super("USA", "Canada")
+		)
+		expect(Country.USA?.value).to.be("USA")
+		expect(Country.Denmark).to.be(undefined)
 
 
 
@@ -166,11 +175,6 @@ describe 'Cheker Tests', ->
 		constructor: () -> super("USA", "Canada")
 	)
 
-	it 'should be possible to create enums', ->
-		expect(Country.USA?.value).to.be("USA")
-		expect(Country.Denmark).to.be(undefined)
-
-
 	it 'should be possible to use enums in specs', ->
 
 		PersonSpec = {
@@ -199,10 +203,10 @@ describe 'Cheker Tests', ->
 		}
 
 		expect(cheker.is(PersonSpec, person1)).to.be.ok()
-#		expect(cheker.not(PersonSpec, person1)).to.not.be.ok()
-#		expect(cheker.is(PersonSpec, person2)).to.not.be.ok()
-#		expect(cheker.is(PersonSpec, person3)).to.not.be.ok()
-#		expect(cheker.is(PersonSpec, person4)).to.not.be.ok()
+		expect(cheker.not(PersonSpec, person1)).to.not.be.ok()
+		expect(cheker.is(PersonSpec, person2)).to.not.be.ok()
+		expect(cheker.is(PersonSpec, person3)).to.not.be.ok()
+		expect(cheker.is(PersonSpec, person4)).to.not.be.ok()
 
 
 	it 'should work for regular object parameters', ->
@@ -268,8 +272,36 @@ describe 'Cheker Tests', ->
 			expect.fail()
 
 
+	it 'should allow for typed function declarations in interface specs', ->
 
+		spec = {
+			prop: Primitives.String
+			func: Primitives.Function("string", "number")("string")
+		}
+
+		good = {
+			prop: "something"
+			func: (string, number) -> return "#{string} -- #{number}"
+		}
+		expect(cheker.is(spec, good)).to.be.ok()
+#		expect(cheker.not(spec, good)).to.not.be.ok()
+
+
+		bad = {
+			prop: "nothing"
+			func: (string, boolean) -> return "#{string} -- #{boolean}"
+		}
+#		expect(cheker.not(spec, bad)).to.be.ok()
+#		expect(cheker.is(spec, bad)).to.not.be.ok()
+
+
+
+## TODO refector to allow enum prims and function decls
 
 ## TODO enum for primitives?
 
 ## TODO change protect to 'guard'
+
+# null tests, undefined tests
+
+# "*" any object?

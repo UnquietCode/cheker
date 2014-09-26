@@ -1,4 +1,5 @@
 Enum = require('./Enum')
+Primitives = require('./Primitives')
 log = (x) -> console.log(x)
 
 
@@ -10,55 +11,37 @@ equalsInterface = (object, spec, assert) ->
 		if assert then throw new Error(message)
 		else return false
 
+	# normalize the spec
+	spec = translateSpec(spec)
+
 	# for every property of the interface
 	for k,v of spec
 		objectValue = object[k]
 
-		# handle enums by unwrapping them
+		# check that the object has the property at all
+		if objectValue == undefined
+			return throwOrReturn("Object does not conform to spec. Missing property '#{k}'.")
+
+		# handle enums by unwrapping them, and ensuring
+		# they are the same type
 		if v instanceof Enum
 			sameMarker = objectValue.marker != undefined && v.marker != undefined && v.marker == objectValue.marker
 
 			if not sameMarker
 				return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of the correct Enum type.")
 
-		# check that the object has the property at all
-		if objectValue == undefined
-			return throwOrReturn("Object does not conform to spec. Missing property '#{k}'.")
-
-		# get the value type
-		vType = if v == null then "null" else typeof v
-		expectedType = null
-
-		# check null first so we don't dereference it
-		if vType == "null"
-			expectedType = "null"
-
-		else if vType == "string"
-			stringType = v.toLowerCase()
-
-			# check for known types
-			if stringType in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
-				expectedType = stringType
-
-			# everything else is a string
-			else
-				expectedType = "string"
-
-		# otherwise, use the type of the provided object
+		# else translate the type
 		else
-			expectedType = vType
+			expectedType = translateType(v)
+			actualType = translateType(objectValue)
 
+			# handle failure
+			if actualType != expectedType
+				return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of type #{expectedType}.")
 
-		# check that the object's property type matches
-		actualType = if objectValue == null then "null" else typeof objectValue
+	#-end loop
 
-		# handle failure
-		if actualType != expectedType
-			return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of type #{expectedType}.")
-
-	#-end
-
-	# all done
+	# all done, and every property was ok
 	return true
 
 
@@ -117,9 +100,60 @@ _not = matcher(false, false)
 assert_is = matcher(true, true, assertHelper(true))
 assert_not = matcher(false, true, assertHelper(false))
 
+# translate a single type
+translateType = (obj) -> translateSpec({ $: obj })["$"]
+
+###
+	Translate a spec object into one which is normalized
+  for the internal methods.
+###
+translateSpec = (spec) ->
+	assert_is.object(spec)
+	newSpec = {}
+
+	for k,v of spec
+		k = "#{k}" # normalize
+
+		# typeof null is not "null"
+		if v == null
+			newSpec[k] = Primitives.Null
+
+		else newSpec[k] = switch typeOf(v)
+			when "undefined" then Primitives.Undefined
+			when "number" then Primitives.Number
+			when "boolean" then Primitives.Boolean
+			when "array" then Primitives.Array
+			when "function" then Primitives.Function
+			when "regex" then Primitives.RegEx
+
+			# objects mean we should use the actual instance
+			when "object" then v
+
+			# if it is a string, try to figure out
+			# which primitive it is talking about
+			when "string"
+				v = v.toLowerCase().trim() # normalize
+
+				# maybe the string of another primitive?
+				if v in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
+					v = v[0].toUpperCase()+v[1..]
+					Primitives[v]
+
+				# assume it is just an example string
+				else Primitives.String
+
+			# fail
+			else throw new Error("unknown type!")
+
+	#- end loop
+
+	return newSpec;
+
+
+typeOf = (obj) -> (typeof obj).toLowerCase()
 
 getTypeString = (type) ->
-	typeName = (typeof type).toLowerCase()
+	typeName = typeOf(type)
 
 	# check for known string types
 	if typeName == "string"
