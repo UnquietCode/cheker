@@ -305,7 +305,7 @@ describe 'Cheker Tests', ->
 		expect(cheker.is(spec, bad2)).to.not.be.ok()
 
 
-	it 'should allow for complex objects in typed function declarations', ->
+	it 'should allow for complex objects in the return type (without args) of typed function declarations', ->
 
 		spec = {
 			prop: Primitives.String
@@ -314,17 +314,45 @@ describe 'Cheker Tests', ->
 
 		obj = {
 			prop: "something"
-			func: cheker.protect({prop: "string"}, "string", "number", (string, number) -> {prop: "#{string} -- #{number}"})
+			func: cheker.protect({prop: "string"}, () -> {prop: 'ello!'})
 		}
 
 		expect(cheker.is(spec, obj)).to.be.ok()
-		expect(cheker.not(spec, good)).to.not.be.ok()
+		expect(cheker.not(spec, obj)).to.not.be.ok()
 
+
+
+	it 'should allow for complex objects in the arguments of typed function declarations', ->
+
+		spec = {
+			prop: Primitives.String
+			func: Primitives.Function("string", {prop: "string"})
+		}
+
+
+###
+	it 'should support varargs'
+
+	it 'should support any object *'
+
+	it 'should allow for varargs in typed function declarations', ->
+
+		spec = {
+			prop: Primitives.String
+			func: Primitives.Function({prop: "string"}, "*...")
+		}
+
+		obj = {
+			prop: "something"
+			func: cheker.protect({prop: "string"}, (string, number) -> {prop: "#{string} -- #{number}"})
+		}
+
+		expect(cheker.is(spec, obj)).to.be.ok()
+		expect(cheker.not(spec, obj)).to.not.be.ok()
+###
 
 
 ## TODO refector to allow enum prims and function decls
-
-## TODO enum for primitives?
 
 ## TODO change protect to 'guard'
 

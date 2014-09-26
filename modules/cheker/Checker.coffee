@@ -50,20 +50,11 @@ equalsInterface = (object, spec, assert) ->
 			badSignature = -> return throwOrReturn("Property '#{k}' should be a function with signature '#{signature.toString()}'")
 
 			# compare return type
-			if translateType(v.rType) != translateType(signature.rType)
-				return badSignature()
+			return badSignature() unless compareTypes(signature.rType, v.rType)
 
 			# compare argument types
-			for arg,i in v.types
-				otherType = signature.types[i]
-
-				# ensure same number of arguments
-				if not otherType
-					return badSignature()
-
-				# ensure same argument type
-				if translateType(arg) != translateType(otherType)
-					return badSignature()
+			for argType,i in signature.types
+				return badSignature() unless compareTypes(argType, v.types[i])
 
 			#-end loop
 
@@ -80,6 +71,33 @@ equalsInterface = (object, spec, assert) ->
 
 	# all done, and every property was ok
 	return true
+
+
+# TODO
+compareTypes = (t1, t2) -> compareTypes(t1, t2, {})
+
+compareTypes = (t1, t2, seen) ->
+
+	# check every property
+	if typeOf(t1) == "object" and typeOf(t2) == "object"
+
+		for k1,v1 of t1
+			v2 = t2[k1]
+
+			# missing property
+			return false unless v2
+
+			# recurse
+			return false unless compareTypes(v1, v2, seen)
+
+		# all properties check out
+		return true
+
+	# translate and compare
+	else
+		translated1 = translateType(t1)
+		translated2 = translateType(t2)
+		return translated1 == translated2
 
 
 matcher = (match, assert, cb) ->
@@ -177,7 +195,8 @@ translateSpec = (spec) ->
 					Primitives[v]
 
 				# assume it is just an example string
-				else Primitives.String
+				else
+					Primitives.String
 
 			# fail
 			else throw new Error("unknown type!")
@@ -206,19 +225,15 @@ getTypeString = (type) ->
 # confirm that the type matches our expectations
 matchArgumentType = (arg, type, types) ->
 	helper = matcher(true, true, protectHelper(types))
-	typeName = getTypeString(type)
+	return matchType(type, arg, helper)
 
-	if typeName == "object"
+matchType = (type, arg, helper) ->
+	expectedType = translateType(type)
 
-		# handle 'any object' type
-		if (typeof type).toLowerCase() == "string"
-			equalsInterface(arg, {}, true)
-
-		# otherwise, use the full object
-		else
-			equalsInterface(arg, type, true)
+	if typeOf(type) == "object" and typeOf(arg) == "object"
+		equalsInterface(arg, type, true)
 	else
-		helper[typeName](arg)
+		helper[expectedType.value](arg)
 
 
 
