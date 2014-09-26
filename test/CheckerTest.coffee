@@ -271,3 +271,5 @@ describe 'Cheker Tests', ->
 
 
 ## TODO enum for primitives?
+
+## TODO change protect to 'guard'

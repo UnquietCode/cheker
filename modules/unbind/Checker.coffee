@@ -16,10 +16,7 @@ equalsInterface = (object, spec, assert) ->
 
 		# handle enums by unwrapping them
 		if v instanceof Enum
-
-			sameMarker = objectValue.marker != undefined \
-								&& v.constructor != undefined \
-								&& v.constructor.marker == objectValue.marker
+			sameMarker = objectValue.marker != undefined && v.marker != undefined && v.marker == objectValue.marker
 
 			if not sameMarker
 				return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of the correct Enum type.")
