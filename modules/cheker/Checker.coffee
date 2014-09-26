@@ -2,6 +2,7 @@ Enum = require('./Enum')
 Primitives = require('./Primitives')
 log = (x) -> console.log(x)
 
+ANY_OBJECT = {}
 
 equalsInterface = (object, spec, assert) ->
 	assert_is.object(spec)
@@ -64,7 +65,7 @@ equalsInterface = (object, spec, assert) ->
 			actualType = translateType(objectValue)
 
 			# handle failure
-			if actualType != expectedType
+			if expectedType != ANY_OBJECT and actualType != expectedType
 				return throwOrReturn("Property '#{k}' should be of type #{expectedType}.")
 
 	#-end loop
@@ -173,6 +174,12 @@ translateSpec = (spec) ->
 		if v == null
 			newSpec[k] = Primitives.Null
 
+		if v is Object then newSpec[k] = {}
+		if v is String then newSpec[k] = Primitives.String
+		if v is Number then newSpec[k] = Primitives.Number
+		if v is Boolean then newSpec[k] = Primitives.Boolean
+		if v is RegExp then newSpec[k] = Primitives.RegEx
+
 		else newSpec[k] = switch typeOf(v)
 			when "undefined" then Primitives.Undefined
 			when "number" then Primitives.Number
@@ -189,8 +196,11 @@ translateSpec = (spec) ->
 			when "string"
 				v = v.toLowerCase().trim() # normalize
 
+				# is it the any object marker?
+				if v == "*" then ANY_OBJECT
+
 				# maybe the string of another primitive?
-				if v in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
+				else if v in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
 					v = v[0].toUpperCase()+v[1..]
 					Primitives[v]
 
@@ -228,12 +238,17 @@ matchArgumentType = (arg, type, types) ->
 	return matchType(type, arg, helper)
 
 matchType = (type, arg, helper) ->
-	expectedType = translateType(type)
 
 	if typeOf(type) == "object" and typeOf(arg) == "object"
-		equalsInterface(arg, type, true)
+		return equalsInterface(arg, type, true)
 	else
-		helper[expectedType.value](arg)
+		expectedType = translateType(type)
+
+		# if its the any object, don't worry about it
+		if expectedType is ANY_OBJECT
+			return true
+		else
+			return helper[expectedType.value](arg)
 
 
 

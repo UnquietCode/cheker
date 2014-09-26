@@ -284,7 +284,6 @@ describe 'Cheker Tests', ->
 			func: cheker.guard("string", "string", "number", (string, number) -> "#{string} -- #{number}")
 		}
 		expect(cheker.is(spec, good)).to.be.ok()
-		expect(cheker.not(spec, good)).to.not.be.ok()
 
 
 		# wrong signature
@@ -293,7 +292,6 @@ describe 'Cheker Tests', ->
 			func: cheker.guard("string", "string", "boolean", (string, boolean) -> "#{string} -- #{boolean}")
 		}
 		expect(cheker.not(spec, bad1)).to.be.ok()
-		expect(cheker.is(spec, bad1)).to.not.be.ok()
 
 
 		# no signature
@@ -302,7 +300,6 @@ describe 'Cheker Tests', ->
 			func: (string, boolean) -> "#{string} -- #{boolean}"
 		}
 		expect(cheker.not(spec, bad2)).to.be.ok()
-		expect(cheker.is(spec, bad2)).to.not.be.ok()
 
 
 	it 'should allow for complex objects in the return type (without args) of typed function declarations', ->
@@ -318,22 +315,26 @@ describe 'Cheker Tests', ->
 		}
 
 		expect(cheker.is(spec, obj)).to.be.ok()
-		expect(cheker.not(spec, obj)).to.not.be.ok()
 
 
-
-	it 'should allow for complex objects in the arguments of typed function declarations', ->
+	it 'should support any object in specs', ->
 
 		spec = {
-			prop: Primitives.String
-			func: Primitives.Function("string", {prop: "string"})
+			prop: "*"
 		}
+
+		obj = {
+			prop: "yup"
+		}
+
+		expect(cheker.is(spec, obj)).to.be.ok()
+
+
 
 
 ###
 	it 'should support varargs'
 
-	it 'should support any object *'
 
 	it 'should allow for varargs in typed function declarations', ->
 
@@ -351,9 +352,6 @@ describe 'Cheker Tests', ->
 		expect(cheker.not(spec, obj)).to.not.be.ok()
 ###
 
-
-## TODO refector to allow enum prims and function decls
-
 # null tests, undefined tests
 
-# "*" any object?
+# TODO regex / regexp value etc.
