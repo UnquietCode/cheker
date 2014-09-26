@@ -276,23 +276,49 @@ describe 'Cheker Tests', ->
 
 		spec = {
 			prop: Primitives.String
-			func: Primitives.Function("string", "number")("string")
+			func: Primitives.Function("string", "string", "number")
 		}
 
 		good = {
 			prop: "something"
-			func: (string, number) -> return "#{string} -- #{number}"
+			func: cheker.protect("string", "string", "number", (string, number) -> "#{string} -- #{number}")
 		}
 		expect(cheker.is(spec, good)).to.be.ok()
-#		expect(cheker.not(spec, good)).to.not.be.ok()
+		expect(cheker.not(spec, good)).to.not.be.ok()
 
 
-		bad = {
+		# wrong signature
+		bad1 = {
 			prop: "nothing"
-			func: (string, boolean) -> return "#{string} -- #{boolean}"
+			func: cheker.protect("string", "string", "boolean", (string, boolean) -> "#{string} -- #{boolean}")
 		}
-#		expect(cheker.not(spec, bad)).to.be.ok()
-#		expect(cheker.is(spec, bad)).to.not.be.ok()
+		expect(cheker.not(spec, bad1)).to.be.ok()
+		expect(cheker.is(spec, bad1)).to.not.be.ok()
+
+
+		# no signature
+		bad2 = {
+			prop: "nothing"
+			func: (string, boolean) -> "#{string} -- #{boolean}"
+		}
+		expect(cheker.not(spec, bad2)).to.be.ok()
+		expect(cheker.is(spec, bad2)).to.not.be.ok()
+
+
+	it 'should allow for complex objects in typed function declarations', ->
+
+		spec = {
+			prop: Primitives.String
+			func: Primitives.Function({prop: "string"})
+		}
+
+		obj = {
+			prop: "something"
+			func: cheker.protect({prop: "string"}, "string", "number", (string, number) -> {prop: "#{string} -- #{number}"})
+		}
+
+		expect(cheker.is(spec, obj)).to.be.ok()
+		expect(cheker.not(spec, good)).to.not.be.ok()
 
 
 

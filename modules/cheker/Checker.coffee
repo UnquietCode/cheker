@@ -8,7 +8,7 @@ equalsInterface = (object, spec, assert) ->
 	assert_is.object(object)
 
 	throwOrReturn = (message) ->
-		if assert then throw new Error(message)
+		if assert then throw new Error("Object does not conform to spec. #{message}")
 		else return false
 
 	# normalize the spec
@@ -20,7 +20,7 @@ equalsInterface = (object, spec, assert) ->
 
 		# check that the object has the property at all
 		if objectValue == undefined
-			return throwOrReturn("Object does not conform to spec. Missing property '#{k}'.")
+			return throwOrReturn("Missing property '#{k}'.")
 
 		# handle enums by unwrapping them, and ensuring
 		# they are the same type
@@ -28,7 +28,44 @@ equalsInterface = (object, spec, assert) ->
 			sameMarker = objectValue.marker != undefined && v.marker != undefined && v.marker == objectValue.marker
 
 			if not sameMarker
-				return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of the correct Enum type.")
+				return throwOrReturn("Property '#{k}' should be of the correct Enum type.")
+
+
+		# handle custom function declarations by checking
+		# that the value is a protected function
+		else if v instanceof Primitives.Function.Signature
+
+			# handle nulls
+			if objectValue == null
+				return throwOrReturn("Property '#{k}' expects a function, but the value was null.");
+
+			signature = objectValue.___chekerSignature
+
+			# handle plain old functions with a warning
+			if not signature
+				return throwOrReturn("Property '#{k}' is not a protected function.");
+				#console.warn("Unable to verify property. Property '#{k}' is not a protected function.")
+
+			# handle cheker functions by looking at the signature and comparing
+			badSignature = -> return throwOrReturn("Property '#{k}' should be a function with signature '#{signature.toString()}'")
+
+			# compare return type
+			if translateType(v.rType) != translateType(signature.rType)
+				return badSignature()
+
+			# compare argument types
+			for arg,i in v.types
+				otherType = signature.types[i]
+
+				# ensure same number of arguments
+				if not otherType
+					return badSignature()
+
+				# ensure same argument type
+				if translateType(arg) != translateType(otherType)
+					return badSignature()
+
+			#-end loop
 
 		# else translate the type
 		else
@@ -37,7 +74,7 @@ equalsInterface = (object, spec, assert) ->
 
 			# handle failure
 			if actualType != expectedType
-				return throwOrReturn("Object does not conform to spec. Property '#{k}' should be of type #{expectedType}.")
+				return throwOrReturn("Property '#{k}' should be of type #{expectedType}.")
 
 	#-end loop
 
@@ -190,7 +227,7 @@ protect = (rType, types..., f) ->
 
 	# return a function which checks all arguments
 	# for consistency
-	return (args...) ->
+	newFunction = (args...) ->
 
 		# check every property in the spec
 		for i in [0...args.length]
@@ -221,6 +258,9 @@ protect = (rType, types..., f) ->
 		return result
 
 
+	# mark the function and return it
+	newFunction.___chekerSignature = new Primitives.Function.Signature(rType, types...)
+	return newFunction
 
 apply = (rType, types..., originalFunction) ->
 

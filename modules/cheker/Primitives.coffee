@@ -10,12 +10,16 @@ Primitives = new (class extends Enum
 		super(map)
 )
 
-functionHelper = (types...) ->
-	return (rType) ->
+Signature = class
+	constructor: (@rType, @types...) ->
+	toString: -> "#{@rType} -> #{@types}"
 
+functionHelper = (rType, types...) ->
+	return new Primitives.Function.Signature(rType, types...)
 
 functionHelper.marker = Primitives.Function.marker
 functionHelper.value = Primitives.Function.value
 Primitives.Function = functionHelper
+Primitives.Function.Signature = Signature
 
 module.exports = Primitives
