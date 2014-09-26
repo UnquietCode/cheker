@@ -330,8 +330,26 @@ describe 'Cheker Tests', ->
 		expect(cheker.is(spec, obj)).to.be.ok()
 
 
+	it 'should block returns from a guarded undefined function', ->
+		result = cheker.guard(undefined, () -> return "hello")()
+		expect(result).to.be(undefined)
+
+	it 'should allow any return type from a guarded function', ->
+		result = cheker.guard("*", () -> return "hello")()
+		expect(result).to.be("hello")
 
 
+
+
+# TODO null tests, undefined tests
+
+# TODO regex / regexp value etc.
+
+# TODO change file name to Cheker
+
+
+
+# TODO varargs
 ###
 	it 'should support varargs'
 
@@ -351,7 +369,3 @@ describe 'Cheker Tests', ->
 		expect(cheker.is(spec, obj)).to.be.ok()
 		expect(cheker.not(spec, obj)).to.not.be.ok()
 ###
-
-# null tests, undefined tests
-
-# TODO regex / regexp value etc.
