@@ -237,7 +237,7 @@ matchType = (type, arg, helper) ->
 
 
 
-protect = (rType, types..., f) ->
+guard = (rType, types..., f) ->
 	assert_is.function f
 
 	# return a function which checks all arguments
@@ -294,7 +294,7 @@ apply = (rType, types..., originalFunction) ->
 		# ok, so return an applied protected function
 		remainingTypes = types[appliedArgs.length...types.length]
 
-		return protect(rType, remainingTypes..., (args...) ->
+		return guard(rType, remainingTypes..., (args...) ->
 
 			# combine the args
 			args = appliedArgs.concat(args)
@@ -323,7 +323,7 @@ apply = (rType, types..., originalFunction) ->
   			.string(test)
 
   	# guard a function with automatic type checks
-  	.protect(returnType, argumentTypes..., function)
+  	.guard(returnType, argumentTypes..., function)
 
   	# check some arguments, apply them, then check the remaining
   	# arguments as normal with each invocation of the function
@@ -338,6 +338,6 @@ module.exports = {
 		is:	assert_is
 		not: assert_not
 
-	protect: protect
+	guard: guard
 	apply: apply
 }
