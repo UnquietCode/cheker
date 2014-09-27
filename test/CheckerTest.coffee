@@ -335,7 +335,7 @@ describe 'Cheker Tests', ->
 	it 'should support any object in specs', ->
 
 		spec = {
-			prop: "*"
+			prop: Object
 		}
 
 		obj = {
@@ -350,7 +350,7 @@ describe 'Cheker Tests', ->
 		expect(result).to.be(undefined)
 
 	it 'should allow any return type from a guarded function', ->
-		result = cheker.guard("*", () -> return "hello")()
+		result = cheker.guard(Object, () -> return "hello")()
 		expect(result).to.be("hello")
 
 

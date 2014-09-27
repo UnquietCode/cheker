@@ -2,9 +2,8 @@ Enum = require('./Enum')
 Primitives = require('./Primitives')
 log = (x) -> console.log(x)
 
-ANY_OBJECT = {}
 UNDEFINED = {}
-NULL = {}
+
 
 equalsInterface = (object, spec, assert) ->
 	assert_is.object(spec)
@@ -71,8 +70,7 @@ equalsInterface = (object, spec, assert) ->
 				return throwOrReturn("Property '#{k}' should be the correct instance type.")
 
 			# handle failure
-			if expectedType != ANY_OBJECT and actualType != expectedType
-				log "hereb"
+			if expectedType != Object and actualType != expectedType
 				return throwOrReturn("Property '#{k}' should be of type #{expectedType}.")
 
 	#-end loop
@@ -166,7 +164,7 @@ assert_not = matcher(false, true, assertHelper(false))
 
 
 translateValueType = (obj) ->
-	if obj == null then return NULL
+	if obj == null then return null
 
 	switch typeOf(obj)
 		when "number" then Number
@@ -194,7 +192,7 @@ translateSpec = (spec) ->
 
 		# typeof null is not "null"
 		if v == null
-			newSpec[k] = NULL
+			newSpec[k] = null
 
 		else newSpec[k] = switch typeOf(v)
 			when "undefined" then UNDEFINED
@@ -204,20 +202,6 @@ translateSpec = (spec) ->
 
 			# objects mean we should use the actual instance
 			when "object" then v
-
-			# if it is a string, try to figure out
-			# which primitive it is talking about
-			when "string"
-				v = v.toLowerCase().trim() # normalize
-
-				# look for specific string values
-				switch v
-
-					# is it the any object marker?
-					when "*" then ANY_OBJECT
-
-					# fail
-					else throw new Error("invalid string type '#{v}'")
 
 			# fail
 			else throw new Error("invalid type '#{typeOf(v)}'")
@@ -250,7 +234,7 @@ matchType = (type, arg, helper) ->
 	expectedType = translateType(type)
 
 	# handle null and undefined first
-	if expectedType == NULL then return arg == null
+	if expectedType == null then return arg == null
 	if expectedType == UNDEFINED then return arg == undefined
 
 	# two objects, compare by spec
@@ -272,7 +256,7 @@ matchType = (type, arg, helper) ->
 			else throw new Error("unknown type #{type}")
 
 	# if its the any object, don't worry about it
-	else if expectedType is ANY_OBJECT
+	else if expectedType is Object
 			return true
 	else
 		return helper[typeOf(type)](arg)
