@@ -60,7 +60,7 @@ describe 'Cheker Tests', ->
 			expect(typeof string).to.be("string")
 			expect(typeof number).to.be("number")
 
-		protectedFunction = cheker.guard(undefined, "string", "number", myLameFunction)
+		protectedFunction = cheker.guard(undefined, String, Number, myLameFunction)
 		protectedFunction("1", 2)
 		expect(called).to.be.ok()
 
@@ -75,9 +75,9 @@ describe 'Cheker Tests', ->
 
 
 	IPerson = {
-		name: "string"
-		age: 0
-		alive: "boolean"
+		name: String
+		age: Number
+		alive: Boolean
 	}
 
 	Person = {
@@ -92,13 +92,13 @@ describe 'Cheker Tests', ->
 		expect(cheker.is(IPerson, Person)).to.be.ok()
 
 		# anonymous spec
-		expect(cheker.is({happy: "boolean"}, Person)).to.be.ok()
-		expect(cheker.is({sad: "boolean"}, Person)).not.to.be.ok()
-		expect(cheker.is({sad: "string"}, Person)).not.to.be.ok()
+		expect(cheker.is({happy: Boolean}, Person)).to.be.ok()
+		expect(cheker.is({sad: Boolean}, Person)).not.to.be.ok()
+		expect(cheker.is({sad: String}, Person)).not.to.be.ok()
 
 		# asserts
 		try
-			cheker.not({happy: "boolean"}, Person)
+			cheker.not({happy: Boolean}, Person)
 			expect.fail()
 
 
@@ -132,7 +132,7 @@ describe 'Cheker Tests', ->
 			expect(typeof obj.from).to.be('string')
 			return "To: #{obj.to}\nFrom: #{obj.from}"
 
-		post = cheker.guard("string", {to: 'string', from: 'string' }, _post)
+		post = cheker.guard(String, {to: String, from: String}, _post)
 		post({to: "Mom", from: "Bobby"})
 		expect(called).to.be.ok()
 
@@ -144,7 +144,7 @@ describe 'Cheker Tests', ->
 	it 'should guard against invalid return values', ->
 		called = false
 
-		func = cheker.guard('string', () ->
+		func = cheker.guard(String, () ->
 			called = true
 			return 1234
 		)
@@ -159,7 +159,7 @@ describe 'Cheker Tests', ->
 	it 'should be possible to specify return types in function guards', ->
 		called = false
 
-		func = cheker.guard('string', {firstName:"", lastName:""}, (person) ->
+		func = cheker.guard(String, {firstName:String, lastName:String}, (person) ->
 			called = true
 			return "Hello #{person.firstName} #{person.lastName}!"
 		)
@@ -178,7 +178,7 @@ describe 'Cheker Tests', ->
 	it 'should be possible to use enums in specs', ->
 
 		PersonSpec = {
-			name: ""
+			name: String
 			country: Country
 		}
 
@@ -216,7 +216,7 @@ describe 'Cheker Tests', ->
 			called = true
 			expect(obj.yes).to.be(true)
 
-		pFunc = cheker.guard(undefined, "object", func)
+		pFunc = cheker.guard(undefined, Object, func)
 		pFunc({yes:yes})
 		expect(called).to.be.ok()
 
@@ -255,7 +255,7 @@ describe 'Cheker Tests', ->
 		func = (string, number) -> "#{string} -- #{number}"
 
 		# failing
-		pFunc = cheker.guard("", "", 0, func)
+		pFunc = cheker.guard(String, String, Number, func)
 
 		try
 			pFunc(1, 2)
@@ -263,7 +263,7 @@ describe 'Cheker Tests', ->
 
 
 		# with application
-		applied = cheker.apply("", "", 0, func)("str")
+		applied = cheker.apply(String, String, Number, func)("str")
 		result = applied(4)
 		expect(result).to.be("str -- 4")
 
@@ -275,13 +275,13 @@ describe 'Cheker Tests', ->
 	it 'should allow for typed function declarations in interface specs', ->
 
 		spec = {
-			prop: Primitives.String
-			func: Primitives.Function("string", "string", "number")
+			prop: String
+			func: Primitives.Function(String, String, Number)
 		}
 
 		good = {
 			prop: "something"
-			func: cheker.guard("string", "string", "number", (string, number) -> "#{string} -- #{number}")
+			func: cheker.guard(String, String, Number, (string, number) -> "#{string} -- #{number}")
 		}
 		expect(cheker.is(spec, good)).to.be.ok()
 
@@ -289,7 +289,7 @@ describe 'Cheker Tests', ->
 		# wrong signature
 		bad1 = {
 			prop: "nothing"
-			func: cheker.guard("string", "string", "boolean", (string, boolean) -> "#{string} -- #{boolean}")
+			func: cheker.guard(String, String, Boolean, (string, boolean) -> "#{string} -- #{boolean}")
 		}
 		expect(cheker.not(spec, bad1)).to.be.ok()
 
@@ -305,13 +305,13 @@ describe 'Cheker Tests', ->
 	it 'should allow for complex objects in the return type (without args) of typed function declarations', ->
 
 		spec = {
-			prop: Primitives.String
-			func: Primitives.Function({prop: "string"})
+			prop: String
+			func: Primitives.Function({prop: String})
 		}
 
 		obj = {
 			prop: "something"
-			func: cheker.guard({prop: "string"}, () -> {prop: 'ello!'})
+			func: cheker.guard({prop: String}, () -> {prop: 'ello!'})
 		}
 
 		expect(cheker.is(spec, obj)).to.be.ok()
@@ -343,11 +343,9 @@ describe 'Cheker Tests', ->
 
 # TODO null tests, undefined tests
 
-# TODO regex / regexp value etc.
-
 # TODO change file name to Cheker
 
-
+# any object to just Object
 
 # TODO varargs
 ###

@@ -3,6 +3,8 @@ Primitives = require('./Primitives')
 log = (x) -> console.log(x)
 
 ANY_OBJECT = {}
+UNDEFINED = {}
+NULL = {}
 
 equalsInterface = (object, spec, assert) ->
 	assert_is.object(spec)
@@ -62,7 +64,10 @@ equalsInterface = (object, spec, assert) ->
 		# else translate the type
 		else
 			expectedType = translateType(v)
-			actualType = translateType(objectValue)
+			actualType = translateValueType(objectValue)
+
+			if typeOf(actualType) == "object" and expectedType == Function and not actualType instanceof expectedType
+				return throwOrReturn("Property '#{k}' should be the correct instance type.")
 
 			# handle failure
 			if expectedType != ANY_OBJECT and actualType != expectedType
@@ -147,7 +152,8 @@ assertHelper = (match) -> (result, expected, actual) ->
 
 protectHelper = (types) -> (result, expected, actual) ->
 	if not result
-		realTypes = getTypeString(type) for type, i in types
+		realTypes = []
+		realTypes.push(getTypeString(type)) for type in types
 		throw new Error("function signature mismatch: expected [#{realTypes}]")
 
 
@@ -155,6 +161,20 @@ _is = matcher(true, false)
 _not = matcher(false, false)
 assert_is = matcher(true, true, assertHelper(true))
 assert_not = matcher(false, true, assertHelper(false))
+
+
+translateValueType = (obj) ->
+	if obj == null then return NULL
+
+	switch typeOf(obj)
+		when "number" then Number
+		when "undefined" then UNDEFINED
+		when "object" then obj
+		when "string" then String
+		when "boolean" then Boolean
+		when "function" then obj
+		when "regexp" then RegExp
+
 
 # translate a single type
 translateType = (obj) -> translateSpec({ $: obj })["$"]
@@ -172,21 +192,13 @@ translateSpec = (spec) ->
 
 		# typeof null is not "null"
 		if v == null
-			newSpec[k] = Primitives.Null
-
-		if v is Object then newSpec[k] = {}
-		if v is String then newSpec[k] = Primitives.String
-		if v is Number then newSpec[k] = Primitives.Number
-		if v is Boolean then newSpec[k] = Primitives.Boolean
-		if v is RegExp then newSpec[k] = Primitives.RegEx
+			newSpec[k] = null
 
 		else newSpec[k] = switch typeOf(v)
-			when "undefined" then Primitives.Undefined
-			when "number" then Primitives.Number
-			when "boolean" then Primitives.Boolean
-			when "array" then Primitives.Array
-			when "function" then Primitives.Function
-			when "regex" then Primitives.RegEx
+			when "undefined" then UNDEFINED
+
+			# function should return the actual instance
+			when "function" then v
 
 			# objects mean we should use the actual instance
 			when "object" then v
@@ -196,20 +208,17 @@ translateSpec = (spec) ->
 			when "string"
 				v = v.toLowerCase().trim() # normalize
 
-				# is it the any object marker?
-				if v == "*" then ANY_OBJECT
+				# look for specific string values
+				switch v
 
-				# maybe the string of another primitive?
-				else if v in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
-					v = v[0].toUpperCase()+v[1..]
-					Primitives[v]
+					# is it the any object marker?
+					when "*" then ANY_OBJECT
 
-				# assume it is just an example string
-				else
-					Primitives.String
+					# fail
+					else throw new Error("invalid string type '#{v}'")
 
 			# fail
-			else throw new Error("unknown type!")
+			else throw new Error("invalid type '#{typeOf(v)}'")
 
 	#- end loop
 
@@ -237,18 +246,37 @@ matchArgumentType = (arg, type, types) ->
 	helper = matcher(true, true, protectHelper(types))
 	return matchType(type, arg, helper)
 
-matchType = (type, arg, helper) ->
 
+matchType = (type, arg, helper) ->
+	expectedType = translateType(type)
+
+	# handle null and undefined first
+	if expectedType == NULL then return arg == null
+	if expectedType == UNDEFINED then return arg == undefined
+
+	# two objects, compare by spec
 	if typeOf(type) == "object" and typeOf(arg) == "object"
 		return equalsInterface(arg, type, true)
-	else
-		expectedType = translateType(type)
 
-		# if its the any object, don't worry about it
-		if expectedType is ANY_OBJECT
+	# function, compare by type or instance
+	else if typeOf(type) == "function"
+		argType = typeOf(arg)
+
+		switch argType
+			when "string" then return type == String
+			when "number" then return type == Number
+			when "boolean" then return type == Boolean
+			when "regexp" then return type == RegExp
+			when "function" then return type == Function
+
+			when "object" then return arg instanceof type
+			else throw new Error("unknown type #{type}")
+
+	# if its the any object, don't worry about it
+	else if expectedType is ANY_OBJECT
 			return true
-		else
-			return helper[expectedType.value](arg)
+	else
+		return helper[typeOf(type)](arg)
 
 
 
