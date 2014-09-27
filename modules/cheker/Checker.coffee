@@ -19,11 +19,13 @@ equalsInterface = (object, spec, assert) ->
 
 	# for every property of the interface
 	for k,v of spec
+		expectedType = translateType(v)
 		objectValue = object[k]
 
 		# check that the object has the property at all
-		if objectValue == undefined
+		if expectedType != UNDEFINED and objectValue == undefined
 			return throwOrReturn("Missing property '#{k}'.")
+
 
 		# handle enums by unwrapping them, and ensuring
 		# they are the same type
@@ -63,7 +65,6 @@ equalsInterface = (object, spec, assert) ->
 
 		# else translate the type
 		else
-			expectedType = translateType(v)
 			actualType = translateValueType(objectValue)
 
 			if typeOf(actualType) == "object" and expectedType == Function and not actualType instanceof expectedType
@@ -71,6 +72,7 @@ equalsInterface = (object, spec, assert) ->
 
 			# handle failure
 			if expectedType != ANY_OBJECT and actualType != expectedType
+				log "hereb"
 				return throwOrReturn("Property '#{k}' should be of type #{expectedType}.")
 
 	#-end loop
@@ -192,7 +194,7 @@ translateSpec = (spec) ->
 
 		# typeof null is not "null"
 		if v == null
-			newSpec[k] = null
+			newSpec[k] = NULL
 
 		else newSpec[k] = switch typeOf(v)
 			when "undefined" then UNDEFINED
@@ -228,17 +230,14 @@ translateSpec = (spec) ->
 typeOf = (obj) -> (typeof obj).toLowerCase()
 
 getTypeString = (type) ->
-	typeName = typeOf(type)
-
-	# check for known string types
-	if typeName == "string"
-		stringType = type.toLowerCase()
-
-		if stringType in ["null", "undefined", "number", "string", "boolean", "object", "array", "function", "regex"]
-			return stringType
-
-
-	return typeName
+	switch type
+		when String then "String"
+		when Boolean then "Boolean"
+		when Object then "Object"
+		when Function then "Function"
+		when Number then "Number"
+		when RegExp then "RegExp"
+		else typeOf(type)
 
 
 # confirm that the type matches our expectations
@@ -300,17 +299,15 @@ guard = (rType, types..., f) ->
 
 		# everything was ok for arguments, so execute the function
 		result = f.apply(this, args)
-		rTypeName = getTypeString(rType)
 
 		# force return undefined
-		if rTypeName == "undefined"
+		expectedReturnType = translateType(rType)
+
+		if expectedReturnType == UNDEFINED
 			return undefined
 
 		# check the result type
-		if rTypeName == "object"
-			equalsInterface(result, rType, true)
-		else
-			matcher(true, true)[rTypeName](result)
+		matchArgumentType(result, rType, types)
 
 		# ok, so return the value
 		return result

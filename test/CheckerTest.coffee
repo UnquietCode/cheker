@@ -226,6 +226,21 @@ describe 'Cheker Tests', ->
 		expect(called).to.be.ok()
 
 
+		pFunc = cheker.guard(undefined, Object, (obj) ->
+			called = true
+			expect((typeof obj).toLowerCase() == "object").to.be(true)
+		)
+
+		called = false
+		pFunc({})
+		expect(called).to.be.ok()
+
+		called = false
+		pFunc(new Date())
+		expect(called).to.be.ok()
+
+
+
 	it 'should provide support for basic primitives', ->
 		methods = ["null", "undefined", "number", "string", "boolean", "array", "function", "regex", "regEx"]
 
@@ -339,9 +354,11 @@ describe 'Cheker Tests', ->
 		expect(result).to.be("hello")
 
 
+	it 'should work for null and undefined', ->
+		expect(cheker.is({a: null}, {a: null, b:""})).to.be.ok()
+		expect(cheker.is({a: undefined}, {a: undefined, b:""})).to.be.ok()
 
 
-# TODO null tests, undefined tests
 
 # TODO change file name to Cheker
 
