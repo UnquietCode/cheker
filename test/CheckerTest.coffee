@@ -49,7 +49,7 @@ describe 'Cheker Tests', ->
 
 		try
 			cheker.assert.not.string("hello")
-			expect.fail()
+			expect().fail()
 
 
 	it 'should protect a function with type checks', ->
@@ -67,11 +67,11 @@ describe 'Cheker Tests', ->
 		# test failure
 		try
 			protectedFunction(1, 2)
-			expect.fail()
+			expect().fail()
 
 		try
 			protectedFunction()
-			expect.fail()
+			expect().fail()
 
 
 	IPerson = {
@@ -99,7 +99,7 @@ describe 'Cheker Tests', ->
 		# asserts
 		try
 			cheker.not({happy: Boolean}, Person)
-			expect.fail()
+			expect().fail()
 
 
 	it 'should be possible to use custom types in function guards', ->
@@ -116,11 +116,11 @@ describe 'Cheker Tests', ->
 
 		try
 			showPerson(25)
-			expect.fail()
+			expect().fail()
 
 		try
 			showPerson({})
-			expect.fail()
+			expect().fail()
 
 
 	it 'should be possible to use anonymous specs in function guards', ->
@@ -138,7 +138,7 @@ describe 'Cheker Tests', ->
 
 		try
 			post({to: "Santa Claus"})
-			expect.fail()
+			expect().fail()
 
 
 	it 'should guard against invalid return values', ->
@@ -151,7 +151,7 @@ describe 'Cheker Tests', ->
 
 		try
 			func()
-			expect.fail()
+			expect().fail()
 
 		expect(called).to.be.ok()
 
@@ -274,7 +274,7 @@ describe 'Cheker Tests', ->
 
 		try
 			pFunc(1, 2)
-			expect.fail()
+			expect().fail()
 
 
 		# with application
@@ -284,7 +284,7 @@ describe 'Cheker Tests', ->
 
 		try
 			applied(true)
-			expect.fail()
+			expect().fail()
 
 
 	it 'should allow for typed function declarations in interface specs', ->
@@ -344,6 +344,13 @@ describe 'Cheker Tests', ->
 
 		expect(cheker.is(spec, obj)).to.be.ok()
 
+	it 'should fail when returning the wrong type from a guarded function', ->
+		func = cheker.guard(Number, () -> return "hello")
+
+		try
+			func()
+			expect().fail()
+
 
 	it 'should block returns from a guarded undefined function', ->
 		result = cheker.guard(undefined, () -> return "hello")()
@@ -358,6 +365,66 @@ describe 'Cheker Tests', ->
 		expect(cheker.is({a: null}, {a: null, b:""})).to.be.ok()
 		expect(cheker.is({a: undefined}, {a: undefined, b:""})).to.be.ok()
 
+
+	it 'should be able to guard a function with narrowed objects', ->
+		parent = {
+			one: 1
+		}
+
+		child = cheker.extend(parent, {
+			two: 2
+		})
+
+		narrowed = cheker.narrow(parent, (pType) ->
+			return pType.one
+		)
+		expect(narrowed(child)).to.be(1)
+
+		try
+			narrowed({ three: 3	})
+			expect().fail()
+
+
+	it 'should be able to guard a function with narrowed functions', ->
+		class Parent
+			one: 1
+
+		class Child extends Parent
+			two: 2
+
+		class Nothing
+			three: 3
+
+
+		narrowed = cheker.narrow(Parent, (pType) ->
+			return pType.one
+		)
+		expect(narrowed(new Child())).to.be(1)
+
+		try
+			narrowed(new Nothing())
+			expect().fail()
+
+
+
+###
+	function vs object, do instanceof
+	object vs object, do extends
+	interface vs object, do spec match
+	interface vs interface, do extends
+
+	mainly this is confusing because what if you accidentally pass in an interface?
+###
+
+
+#	TODO is this valid?
+#	it 'should work for a simple class type', ->
+#
+#		class MyClass
+#			constructor: (@value) ->
+#
+#		expect(cheker.is(MyClass, new MyClass("a"))).to.be.ok()
+#		expect(cheker.is(MyClass, MyClass)).to.not.be.ok()
 
 
 # TODO change file name to Cheker

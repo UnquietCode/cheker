@@ -48,17 +48,10 @@ equalsInterface = (object, spec, assert) ->
 			# handle plain old functions with a warning
 			if not signature
 				return throwOrReturn("Property '#{k}' is not a protected function.");
-				#console.warn("Unable to verify property. Property '#{k}' is not a protected function.")
 
-			# handle cheker functions by looking at the signature and comparing
-			badSignature = -> return throwOrReturn("Property '#{k}' should be a function with signature '#{signature.toString()}'")
-
-			# compare return type
-			return badSignature() unless compareTypes(signature.rType, v.rType)
-
-			# compare argument types
-			for argType,i in signature.types
-				return badSignature() unless compareTypes(argType, v.types[i])
+			# check that signatures match
+			if not compareSignatures(signature, v)
+				return throwOrReturn("Property '#{k}' should be a function with signature '#{signature.toString()}'")
 
 			#-end loop
 
@@ -79,13 +72,34 @@ equalsInterface = (object, spec, assert) ->
 	return true
 
 
-# TODO
+compareSignatures = (sig1, sig2) ->
+
+	# TODO helper to check instances?
+	if not sig1 instanceof Primitives.Function.Signature or not sig2 instanceof Primitives.Function.Signature
+		throw new Error("expected arguments to be signatures")
+
+	# compare return type
+	return false unless compareTypes(sig1.rType, sig2.rType)
+
+	# compare argument types
+	for argType,i in sig1.types
+		return false unless compareTypes(argType, sig2.types[i])
+
+	return true
+
+
+
+# TODO seen?
 compareTypes = (t1, t2) -> compareTypes(t1, t2, {})
 
 compareTypes = (t1, t2, seen) ->
 
+	# check for signatures
+	if t1 instanceof Primitives.Function.Signature and t2 instanceof Primitives.Function.Signature
+		return compareSignatures(t1, t2)
+
 	# check every property
-	if typeOf(t1) == "object" and typeOf(t2) == "object"
+	else if typeOf(t1) == "object" and typeOf(t2) == "object"
 
 		for k1,v1 of t1
 			v2 = t2[k1]
@@ -108,13 +122,6 @@ compareTypes = (t1, t2, seen) ->
 
 matcher = (match, assert, cb) ->
 
-	equalsType = (object, type) ->
-		actual = (typeof object).toLowerCase()
-		equals = actual is type
-		retval = if match then equals else not equals
-		if cb then cb(retval, type, actual) else return retval
-
-
 	func = (spec, object) ->
 		result = equalsInterface(object, spec, assert)
 		result = if match then result else !result
@@ -122,15 +129,27 @@ matcher = (match, assert, cb) ->
 		if !result and assert
 			matchStr = if match then "match" else "not match"
 			throw new Error("expected object to #{matchStr} spec")
-		else
-			return result
+		else return result
 
+	equalsType = (object, type) ->
+		actual = (typeof object).toLowerCase()
+		equals = actual is type
+		result = if match then equals else not equals
+		cb?(result, type, actual)
+
+		if !result and assert
+			throw new Error("expected object to match type '#{getTypeString(type)}")
+		else return result
 
 	func.null = (test) ->
 			equals = test == null
-			retval = if match then equals else not equals
+			result = if match then equals else not equals
 			actual = if equals then "null" else (typeof object).toLowerCase()
-			if cb then cb(retval, "null", actual) else return retval
+			cb?(result, "null", actual)
+
+			if !result and assert
+				throw new Error("expected object to be null")
+			else return result
 
 	func.undefined = (test) -> equalsType(test, 'undefined')
 	func.number = (test) -> equalsType(test, 'number')
@@ -227,7 +246,10 @@ getTypeString = (type) ->
 # confirm that the type matches our expectations
 matchArgumentType = (arg, type, types) ->
 	helper = matcher(true, true, protectHelper(types))
-	return matchType(type, arg, helper)
+	result = matchType(type, arg, helper)
+
+	if not result
+		throw new Error("expected '#{arg}' to be of type #{getTypeString(type)}")
 
 
 matchType = (type, arg, helper) ->
@@ -244,13 +266,14 @@ matchType = (type, arg, helper) ->
 	# function, compare by type or instance
 	else if typeOf(type) == "function"
 		argType = typeOf(arg)
+		valid = (t) -> type == t or type == Object
 
 		switch argType
-			when "string" then return type == String
-			when "number" then return type == Number
-			when "boolean" then return type == Boolean
-			when "regexp" then return type == RegExp
-			when "function" then return type == Function
+			when "string" then return valid(String)
+			when "number" then return valid(Number)
+			when "boolean" then return valid(Boolean)
+			when "regexp" then return valid(RegExp)
+			when "function" then return valid(Function)
 
 			when "object" then return arg instanceof type
 			else throw new Error("unknown type #{type}")
@@ -328,6 +351,57 @@ apply = (rType, types..., originalFunction) ->
 		)
 
 
+_extends = (spec1, spec2, assert) ->
+	assert_is.object(spec1)
+	assert_is.object(spec2)
+
+	for k1,v1 of spec1
+		v2 = spec2[k1]
+
+		if v1 != v2
+			if assert	throw new Error("Objects do not match. Property '#{k1}' should be of type #{getTypeString(v1 || v2)}.")
+			else return false
+
+	return true
+
+
+extend = (obj1, obj2) ->
+	assert_is.object(obj1)
+	assert_is.object(obj2)
+	obj3 = {}
+
+	obj3[key] = value for key,value of obj1
+	obj3[key] = value for key,value of obj2
+	return obj3
+
+
+inherits = (func, obj) ->
+	assert_is.function(func)
+	assert_is.object(obj)
+
+	if not obj instanceof func
+		throw new Error("expected instance of '#{func}'")
+
+
+narrow = (objects..., f) ->
+
+	return (args...) ->
+
+		# check for same argument count
+		if objects.length != args.length
+			throw new Error("incorrect number of arguments")
+
+		# check for validity
+		for arg, i in args
+			expectedType = objects[i]
+
+			if typeOf(expectedType) == "function"
+				inherits(expectedType, arg)
+			else
+				_extends(expectedType, arg, true)
+
+		# all good
+		f(args...)
 ###
 
   cheker
@@ -361,7 +435,12 @@ module.exports = {
 	assert:
 		is:	assert_is
 		not: assert_not
+		extends: (spec1, spec2) -> _extends(spec1, spec2, true)
 
+	extend: extend
+	extends: (spec1, spec2) -> _extends(spec1, spec2, false)
+
+	narrow: narrow
 	guard: guard
 	apply: apply
 }
