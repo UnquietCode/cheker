@@ -2,7 +2,7 @@ expect = require('expect.js');
 
 Enum = require('../modules/cheker/Enum')
 Primitives = require('../modules/cheker/Primitives');
-cheker = require('../modules/cheker/Checker');
+cheker = require('../modules/cheker/Cheker');
 
 describe 'Enum Tests', ->
 
@@ -407,14 +407,17 @@ describe 'Cheker Tests', ->
 
 
 
-###
-	function vs object, do instanceof
-	object vs object, do extends
-	interface vs object, do spec match
-	interface vs interface, do extends
+	it 'should consider prototypes when looking at narrowed types', ->
+		class A
+			one: "1"
 
-	mainly this is confusing because what if you accidentally pass in an interface?
-###
+		class B extends A
+			two: 2
+
+
+		narrowed = cheker.narrow(new A(), (obj) -> "boop")
+		narrowed(new B())
+
 
 
 #	TODO is this valid?
@@ -427,8 +430,7 @@ describe 'Cheker Tests', ->
 #		expect(cheker.is(MyClass, MyClass)).to.not.be.ok()
 
 
-# TODO change file name to Cheker
-
+# Autoboxing
 # any object to just Object
 
 # TODO varargs

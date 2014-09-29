@@ -359,7 +359,7 @@ _extends = (spec1, spec2, assert) ->
 		v2 = spec2[k1]
 
 		if v1 != v2
-			if assert	throw new Error("Objects do not match. Property '#{k1}' should be of type #{getTypeString(v1 || v2)}.")
+			if assert	throw new Error("Objects do not match. Expected matching property '#{k1}'.")
 			else return false
 
 	return true
@@ -426,6 +426,10 @@ narrow = (objects..., f) ->
   	# check some arguments, apply them, then check the remaining
   	# arguments as normal with each invocation of the function
   	.apply(returnType, argumentTypes..., function)
+
+  	# ensure that an object extends another object, or that an object
+  	# is an instance of a constructor function
+  	.narrow(objectOrFunctions..., function)
 
 ###
 module.exports = {
