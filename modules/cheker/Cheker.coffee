@@ -78,7 +78,7 @@ equalsInterface = (object, spec, assert) ->
 compareSignatures = (sig1, sig2) ->
 
 	# TODO helper to check instances?
-	if not sig1 instanceof Signature or not sig2 instanceof _Function.Signature
+	if not sig1 instanceof Signature or not sig2 instanceof Signature
 		throw new Error("expected arguments to be signatures")
 
 	# compare return type
@@ -98,7 +98,7 @@ compareTypes = (t1, t2) -> compareTypes(t1, t2, {})
 compareTypes = (t1, t2, seen) ->
 
 	# check for signatures
-	if t1 instanceof Signature and t2 instanceof _Function.Signature
+	if t1 instanceof Signature and t2 instanceof Signature
 		return compareSignatures(t1, t2)
 
 	# check every property
@@ -410,7 +410,7 @@ narrow = (objects..., f) ->
 _Function = (rType, types...) ->
 	return new Signature(rType, types...)
 
-_Function.Signature = Signature
+Signature = Signature
 
 
 ###
