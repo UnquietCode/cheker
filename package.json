@@ -4,7 +4,7 @@
   "description": "A small and simple JavaScript type checking library.",
   "main": "Checker.coffee",
   "scripts": {
-    "test": "mocha CheckerTest.coffee --compilers coffee:coffee-script/register "
+    "test": "node_modules/mocha/bin/mocha CheckerTest.coffee --compilers coffee:coffee-script/register"
   },
   "repository": {
     "type": "git",

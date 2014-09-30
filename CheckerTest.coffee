@@ -3,6 +3,16 @@ expect = require('expect.js');
 Enum = require('./Enum')
 cheker = require('./Cheker');
 
+expectFailure = (cb) ->
+
+	try
+		cb()
+	catch e
+		return
+
+	expect().fail()
+
+
 describe 'Enum Tests', ->
 
 	it 'should have the same marker between instances', ->
@@ -46,9 +56,7 @@ describe 'Cheker Tests', ->
 		expect(cheker.is.string("hello")).to.be.ok()
 		expect(cheker.not.string("hello")).to.not.be.ok()
 
-		try
-			cheker.assert.not.string("hello")
-			expect().fail()
+		expectFailure(-> cheker.assert.not.string("hello"))
 
 
 	it 'should protect a function with type checks', ->
@@ -64,13 +72,8 @@ describe 'Cheker Tests', ->
 		expect(called).to.be.ok()
 
 		# test failure
-		try
-			protectedFunction(1, 2)
-			expect().fail()
-
-		try
-			protectedFunction()
-			expect().fail()
+		expectFailure(-> protectedFunction(1, 2))
+		expectFailure(-> protectedFunction())
 
 
 	IPerson = {
@@ -96,9 +99,7 @@ describe 'Cheker Tests', ->
 		expect(cheker.is({sad: String}, Person)).not.to.be.ok()
 
 		# asserts
-		try
-			cheker.not({happy: Boolean}, Person)
-			expect().fail()
+		expectFailure(-> cheker.assert.not({happy: Boolean}, Person))
 
 
 	it 'should be possible to use custom types in function guards', ->
@@ -113,13 +114,8 @@ describe 'Cheker Tests', ->
 		showPerson(Person)
 		expect(called).to.be.ok()
 
-		try
-			showPerson(25)
-			expect().fail()
-
-		try
-			showPerson({})
-			expect().fail()
+		expectFailure(-> showPerson(25))
+		expectFailure(-> showPerson({}))
 
 
 	it 'should be possible to use anonymous specs in function guards', ->
@@ -135,9 +131,7 @@ describe 'Cheker Tests', ->
 		post({to: "Mom", from: "Bobby"})
 		expect(called).to.be.ok()
 
-		try
-			post({to: "Santa Claus"})
-			expect().fail()
+		expectFailure(-> post({to: "Santa Claus"}))
 
 
 	it 'should guard against invalid return values', ->
@@ -148,10 +142,7 @@ describe 'Cheker Tests', ->
 			return 1234
 		)
 
-		try
-			func()
-			expect().fail()
-
+		expectFailure(func)
 		expect(called).to.be.ok()
 
 
@@ -271,9 +262,7 @@ describe 'Cheker Tests', ->
 		# failing
 		pFunc = cheker.guard(String, String, Number, func)
 
-		try
-			pFunc(1, 2)
-			expect().fail()
+		expectFailure(-> pFunc(1, 2))
 
 
 		# with application
@@ -281,9 +270,7 @@ describe 'Cheker Tests', ->
 		result = applied(4)
 		expect(result).to.be("str -- 4")
 
-		try
-			applied(true)
-			expect().fail()
+		expectFailure(-> applied(true))
 
 
 	it 'should allow for typed function declarations in interface specs', ->
@@ -346,9 +333,7 @@ describe 'Cheker Tests', ->
 	it 'should fail when returning the wrong type from a guarded function', ->
 		func = cheker.guard(Number, () -> return "hello")
 
-		try
-			func()
-			expect().fail()
+		expectFailure(func)
 
 
 	it 'should block returns from a guarded undefined function', ->
@@ -379,9 +364,7 @@ describe 'Cheker Tests', ->
 		)
 		expect(narrowed(child)).to.be(1)
 
-		try
-			narrowed({ three: 3	})
-			expect().fail()
+		expectFailure(-> narrowed({ three: 3	}))
 
 
 	it 'should be able to guard a function with narrowed functions', ->
@@ -398,11 +381,9 @@ describe 'Cheker Tests', ->
 		narrowed = cheker.narrow(Parent, (pType) ->
 			return pType.one
 		)
-		expect(narrowed(new Child())).to.be(1)
 
-		try
-			narrowed(new Nothing())
-			expect().fail()
+		expect(narrowed(new Child())).to.be(1)
+		expectFailure(-> narrowed(new Nothing()))
 
 
 
