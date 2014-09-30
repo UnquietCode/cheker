@@ -78,7 +78,7 @@ equalsInterface = (object, spec, assert) ->
 compareSignatures = (sig1, sig2) ->
 
 	# TODO helper to check instances?
-	if not sig1 instanceof Signature or not sig2 instanceof Signature
+	if not (sig1 instanceof Signature) or not (sig2 instanceof Signature)
 		throw new Error("expected arguments to be signatures")
 
 	# compare return type
@@ -382,7 +382,7 @@ inherits = (func, obj) ->
 	assert_is.function(func)
 	assert_is.object(obj)
 
-	if not obj instanceof func
+	if not (obj instanceof func)
 		throw new Error("expected instance of '#{func}'")
 
 
