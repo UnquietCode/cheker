@@ -1,7 +1,7 @@
 expect = require('expect.js');
 
-Enum = require('../modules/cheker/Enum')
-cheker = require('../modules/cheker/Cheker');
+Enum = require('./Enum')
+cheker = require('./Cheker');
 
 describe 'Enum Tests', ->
 

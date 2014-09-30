@@ -1,0 +1,32 @@
+{
+  "name": "cheker",
+  "version": "0.1.0",
+  "description": "A small and simple JavaScript type checking library.",
+  "main": "Checker.coffee",
+  "scripts": {
+    "test": "mocha CheckerTest.coffee --compilers coffee:coffee-script/register "
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UnquietCode/cheker.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "UnquietCode",
+    "types",
+    "typing"
+  ],
+  "author": "Ben Fagin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/UnquietCode/cheker/issues"
+  },
+  "homepage": "https://github.com/UnquietCode/cheker",
+  "dependencies": {
+    "coffee-script": "^1.8.0"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^1.21.4"
+  }
+}
