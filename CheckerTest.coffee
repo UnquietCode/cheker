@@ -417,8 +417,7 @@ describe 'Cheker Tests', ->
 #		expect(cheker.is(MyClass, MyClass)).to.not.be.ok()
 
 
-# Autoboxing
-# any object to just Object
+# TODO object/literals tests for is/not
 
 # TODO varargs
 ###

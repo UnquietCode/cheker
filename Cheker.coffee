@@ -460,4 +460,5 @@ module.exports = {
 	apply: apply
 
 	Function: _Function
+	Enum: Enum
 }

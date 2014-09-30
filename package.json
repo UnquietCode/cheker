@@ -1,8 +1,8 @@
 {
   "name": "cheker",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "A small and simple JavaScript type checking library.",
-  "main": "Checker.coffee",
+  "main": "index.js",
   "scripts": {
     "test": "node_modules/mocha/bin/mocha CheckerTest.coffee --compilers coffee:coffee-script/register"
   },
