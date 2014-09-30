@@ -1,7 +1,6 @@
 expect = require('expect.js');
 
 Enum = require('../modules/cheker/Enum')
-Primitives = require('../modules/cheker/Primitives');
 cheker = require('../modules/cheker/Cheker');
 
 describe 'Enum Tests', ->
@@ -291,7 +290,7 @@ describe 'Cheker Tests', ->
 
 		spec = {
 			prop: String
-			func: Primitives.Function(String, String, Number)
+			func: cheker.Function(String, String, Number)
 		}
 
 		good = {
@@ -321,7 +320,7 @@ describe 'Cheker Tests', ->
 
 		spec = {
 			prop: String
-			func: Primitives.Function({prop: String})
+			func: cheker.Function({prop: String})
 		}
 
 		obj = {
@@ -442,7 +441,7 @@ describe 'Cheker Tests', ->
 
 		spec = {
 			prop: Primitives.String
-			func: Primitives.Function({prop: "string"}, "*...")
+			func: cheker.Function({prop: "string"}, "*...")
 		}
 
 		obj = {

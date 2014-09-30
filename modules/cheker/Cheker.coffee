@@ -1,8 +1,11 @@
 Enum = require('./Enum')
-Primitives = require('./Primitives')
 log = (x) -> console.log(x)
 
 UNDEFINED = {}
+
+Signature = class
+	constructor: (@rType, @types...) ->
+	toString: -> "#{@rType} -> #{@types}"
 
 
 equalsInterface = (object, spec, assert) ->
@@ -37,7 +40,7 @@ equalsInterface = (object, spec, assert) ->
 
 		# handle custom function declarations by checking
 		# that the value is a protected function
-		else if v instanceof Primitives.Function.Signature
+		else if v instanceof Signature
 
 			# handle nulls
 			if objectValue == null
@@ -75,7 +78,7 @@ equalsInterface = (object, spec, assert) ->
 compareSignatures = (sig1, sig2) ->
 
 	# TODO helper to check instances?
-	if not sig1 instanceof Primitives.Function.Signature or not sig2 instanceof Primitives.Function.Signature
+	if not sig1 instanceof Signature or not sig2 instanceof _Function.Signature
 		throw new Error("expected arguments to be signatures")
 
 	# compare return type
@@ -95,7 +98,7 @@ compareTypes = (t1, t2) -> compareTypes(t1, t2, {})
 compareTypes = (t1, t2, seen) ->
 
 	# check for signatures
-	if t1 instanceof Primitives.Function.Signature and t2 instanceof Primitives.Function.Signature
+	if t1 instanceof Signature and t2 instanceof _Function.Signature
 		return compareSignatures(t1, t2)
 
 	# check every property
@@ -321,7 +324,7 @@ guard = (rType, types..., f) ->
 
 
 	# mark the function and return it
-	newFunction.___chekerSignature = new Primitives.Function.Signature(rType, types...)
+	newFunction.___chekerSignature = new Signature(rType, types...)
 	return newFunction
 
 apply = (rType, types..., originalFunction) ->
@@ -402,6 +405,14 @@ narrow = (objects..., f) ->
 
 		# all good
 		f(args...)
+
+
+_Function = (rType, types...) ->
+	return new Signature(rType, types...)
+
+_Function.Signature = Signature
+
+
 ###
 
   cheker
@@ -447,4 +458,6 @@ module.exports = {
 	narrow: narrow
 	guard: guard
 	apply: apply
+
+	Function: _Function
 }
