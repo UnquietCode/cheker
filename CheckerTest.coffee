@@ -399,6 +399,13 @@ describe 'Cheker Tests', ->
 		narrowed(new B())
 
 
+	it 'should fail for invalid interface instance type', ->
+		class A
+		class B
+		spec = { p: A }
+
+		expectFailure(cheker.guard(spec, () -> return { p: new B() }))
+
 
 #	TODO is this valid?
 #	it 'should work for a simple class type', ->

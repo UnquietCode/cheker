@@ -62,7 +62,7 @@ equalsInterface = (object, spec, assert) ->
 		else
 			actualType = translateValueType(objectValue)
 
-			if typeOf(actualType) == "object" and expectedType == Function and not actualType instanceof expectedType
+			if typeOf(actualType) == 'object' and typeOf(expectedType) == 'function' and not(actualType instanceof expectedType)
 				return throwOrReturn("Property '#{k}' should be the correct instance type.")
 
 			# handle failure
