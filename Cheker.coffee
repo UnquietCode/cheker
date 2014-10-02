@@ -2,6 +2,7 @@ Enum = require('./Enum')
 log = (x) -> console.log(x)
 
 UNDEFINED = {}
+SIGNATURE_KEY = "___chekerSignature"
 
 Signature = class
 	constructor: (@rType, @types...) ->
@@ -46,15 +47,15 @@ equalsInterface = (object, spec, assert) ->
 			if objectValue == null
 				return throwOrReturn("Property '#{k}' expects a function, but the value was null.");
 
-			signature = objectValue.___chekerSignature
+			signature = objectValue[SIGNATURE_KEY]
 
 			# handle plain old functions with a warning
 			if not signature
-				return throwOrReturn("Property '#{k}' is not a protected function.");
+				return throwOrReturn("Property '#{k}' is not a guarded function.");
 
 			# check that signatures match
-			if not compareSignatures(signature, v)
-				return throwOrReturn("Property '#{k}' should be a function with signature '#{signature.toString()}'")
+			if not compareSignatures(v, signature)
+				return throwOrReturn("Property '#{k}' should be a function with signature '#{v.toString()}'")
 
 			#-end loop
 
@@ -125,8 +126,16 @@ compareTypes = (t1, t2, seen) ->
 
 matcher = (match, assert, cb) ->
 
+	# comparison function
 	func = (spec, object) ->
-		result = equalsInterface(object, spec, assert)
+
+		# check args
+		if _not.object(spec) or _not.object(object)
+			if assert then throw new Error("only comparisons between a specification and an object are allowed")
+			else result = false
+		else
+			result = equalsInterface(object, spec, assert)
+
 		result = if match then result else !result
 
 		if !result and assert
@@ -283,7 +292,12 @@ matchType = (type, arg, helper) ->
 
 	# if its the any object, don't worry about it
 	else if expectedType is Object
-			return true
+		return true
+
+	# if it is a function signature...
+	else if expectedType instanceof Signature and typeOf(arg) == "function" and arg[SIGNATURE_KEY]
+		return compareSignatures(expectedType, arg[SIGNATURE_KEY])
+
 	else
 		return helper[typeOf(type)](arg)
 
@@ -295,20 +309,53 @@ guard = (rType, types..., f) ->
 	# return a function which checks all arguments
 	# for consistency
 	newFunction = (args...) ->
+		newArgs = []
 
 		# check every property in the spec
-		for i in [0...args.length]
+		for arg, i in args
 
 			# ensure that enough types were provided
 			if i >= types.length
 				throw new Error("too many arguments")
 
-			# confirm that the type matches our expectations
-			matchArgumentType(args[i], types[i], types)
+			type = types[i]
+			argument = arg # copy out of the loop
 
+			# transform objects by wrapping their properties in guarded functions
+			if typeOf(arg) == "object" and typeOf(type) == "object"
+				newThing = {}
+
+				# for every property of the type, if it's a signature, wrap its partner
+				for k1,v1 of arg
+					v2 = type[k1]
+					newThing[k1] = v1
+
+					if typeOf(v1) == "function" and v2 instanceof Signature
+
+						# look for the sig property, means already wrapped
+						if not v2[SIGNATURE_KEY]
+							newThing[k1] = guard(v2.rType, v2.types..., v1)
+
+				#-- end object loop
+				argument = newThing
+
+			#-- end object check
+
+			# wrap functions too
+			else if typeOf(arg) == "function" and typeOf(type) == "object"
+
+				# wrap plain functions
+				if type instanceof Signature and not arg[SIGNATURE_KEY]
+					argument = guard(type.rType, type.types..., arg)
+
+			#-- end function check
+
+			# confirm that the type matches our expectations
+			matchArgumentType(argument, type, types)
+			newArgs[i] = argument
 
 		# everything was ok for arguments, so execute the function
-		result = f.apply(this, args)
+		result = f.apply(this, newArgs)
 
 		# force return undefined
 		expectedReturnType = translateType(rType)
@@ -324,7 +371,7 @@ guard = (rType, types..., f) ->
 
 
 	# mark the function and return it
-	newFunction.___chekerSignature = new Signature(rType, types...)
+	newFunction[SIGNATURE_KEY] = new Signature(rType, types...)
 	return newFunction
 
 apply = (rType, types..., originalFunction) ->

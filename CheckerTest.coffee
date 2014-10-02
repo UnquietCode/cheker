@@ -407,6 +407,96 @@ describe 'Cheker Tests', ->
 		expectFailure(cheker.guard(spec, () -> return { p: new B() }))
 
 
+
+	it 'should work as a narrow', ->
+
+		ITask = {
+			getData: cheker.Function(Object...)
+		}
+
+		IWorker = (TaskType) -> {
+			doWork: cheker.Function(undefined, TaskType)
+		}
+
+
+		ICustomTask = cheker.extend(ITask, {
+			getName: cheker.Function(String)
+		})
+
+		ICustomWorker = cheker.extend(IWorker(ICustomTask), {
+			running: Boolean
+		})
+
+
+		class CustomTask # implements ICustomTask
+			getData: cheker.guard(Object..., () ->
+				return [1, 2, 3]
+			)
+
+			getName: cheker.guard(String, -> "custom task")
+
+
+		run = 0
+
+		class CustomWorker # implements ICustomWorker
+			running: false
+
+			doWork: cheker.guard(undefined, ICustomTask, (task) ->
+				running = true
+				++run
+				running = false
+			)
+
+
+		runTask = cheker.guard(undefined, IWorker(ITask), ITask, (worker, task) ->
+			worker.doWork(task)
+		)
+
+		runSpecialTask = cheker.guard(undefined, ICustomWorker, ICustomTask, (worker, task) ->
+			worker.doWork(task)
+		)
+
+		expect(run).to.be(0)
+		runTask(new CustomWorker(), new CustomTask())
+		expect(run).to.be(1)
+
+		expect(run).to.be(1)
+		runSpecialTask(new CustomWorker(), new CustomTask())
+		expect(run).to.be(2)
+
+		expect(run).to.be(2)
+		task = {
+			getData: -> ["nothing"]
+			getName: -> "anonymous"
+			running: true
+		}
+		runSpecialTask(new CustomWorker(), task)
+		expect(run).to.be(3)
+
+
+	it "should wrap functions which aren't guarded", ->
+		func = -> "sup"
+		accept = cheker.guard(String, cheker.Function(String), (f) -> f())
+		result = accept(func)
+		expect(result).to.be("sup")
+
+
+	it "should wrap functions which aren't guarded in objects", ->
+		obj = {
+			prop: -> "sup"
+		}
+
+		accept = cheker.guard(String, {prop: cheker.Function(String)}, (f) -> f.prop())
+		expect(accept(obj)).to.be("sup")
+
+
+	it "should recognize that functions don't match when doing basic comparisons", ->
+		signature = cheker.Function(String)
+		expect(cheker.not(signature, -> 42)).to.be.ok()
+
+# TODO array types
+
+
 #	TODO is this valid?
 #	it 'should work for a simple class type', ->
 #
