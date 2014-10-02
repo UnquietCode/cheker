@@ -143,9 +143,9 @@ matcher = (match, assert, cb) ->
 			throw new Error("expected object to #{matchStr} spec")
 		else return result
 
-	equalsType = (object, type) ->
+	equalsType = (object, type, primitive) ->
 		actual = (typeof object).toLowerCase()
-		equals = actual is type
+		equals = (actual == type) or (primitive and actual == "object" and object instanceof primitive)
 		result = if match then equals else not equals
 		cb?(result, type, actual)
 
@@ -164,14 +164,14 @@ matcher = (match, assert, cb) ->
 			else return result
 
 	func.undefined = (test) -> equalsType(test, 'undefined')
-	func.number = (test) -> equalsType(test, 'number')
-	func.string = (test) -> equalsType(test, 'string')
-	func.boolean = (test) -> equalsType(test, 'boolean')
+	func.number = (test) -> equalsType(test, 'number', Number)
+	func.string = (test) -> equalsType(test, 'string', String)
+	func.boolean = (test) -> equalsType(test, 'boolean', Boolean)
 	func.object = (test) -> equalsType(test, 'object')
 	func.array = (test) -> equalsType(test, 'array')
 	func.function = (test) -> equalsType(test, 'function')
-	func.regex = (test) -> equalsType(test, 'regexp')
-	func.regEx = (test) -> equalsType(test, 'regexp')
+	func.regexp = (test) -> equalsType(test, 'regexp', RegExp)
+	func.regExp = (test) -> equalsType(test, 'regexp', RegExp)
 
 	return func
 

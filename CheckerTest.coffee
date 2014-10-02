@@ -200,6 +200,8 @@ describe 'Cheker Tests', ->
 
 
 	it 'should work for regular object parameters', ->
+		expect(cheker.is.object({})).to.be.ok()
+
 		called = false
 
 		func = (obj) ->
@@ -232,7 +234,7 @@ describe 'Cheker Tests', ->
 
 
 	it 'should provide support for basic primitives', ->
-		methods = ["null", "undefined", "number", "string", "boolean", "array", "function", "regex", "regEx"]
+		methods = ["null", "undefined", "number", "string", "boolean", "array", "function", "regexp", "regExp"]
 
 		test = (value, expected) ->
 			for method in methods
@@ -494,20 +496,36 @@ describe 'Cheker Tests', ->
 		signature = cheker.Function(String)
 		expect(cheker.not(signature, -> 42)).to.be.ok()
 
-# TODO array types
+
+	it 'should support array types', ->
+		f = cheker.guard(Array, -> [1])
+
+		result = f()
+		expect(result instanceof Array).to.be(true)
+		expect(result[0]).to.be(1)
+
+		# bad type
+		expectFailure(cheker.guard(Array, -> ""))
 
 
-#	TODO is this valid?
-#	it 'should work for a simple class type', ->
-#
-#		class MyClass
-#			constructor: (@value) ->
-#
-#		expect(cheker.is(MyClass, new MyClass("a"))).to.be.ok()
-#		expect(cheker.is(MyClass, MyClass)).to.not.be.ok()
+	it 'should account for literals in is/not tests', ->
+		expect(cheker.is.string("")).to.be.ok()
+		expect(cheker.is.string(new String(""))).to.be.ok()
+
+		expect(cheker.is.number(1)).to.be.ok()
+		expect(cheker.is.number(new Number(1))).to.be.ok()
+
+		expect(cheker.is.boolean(true)).to.be.ok()
+		expect(cheker.is.boolean(new Boolean(true))).to.be.ok()
+
+		expect(cheker.is.regExp(/g/)).to.be.ok()
+		expect(cheker.is.regExp(new RegExp(/g/))).to.be.ok()
 
 
-# TODO object/literals tests for is/not
+
+
+
+
 
 # TODO varargs
 ###
