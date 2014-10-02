@@ -416,10 +416,9 @@ describe 'Cheker Tests', ->
 			getData: cheker.Function(Object...)
 		}
 
-		IWorker = (TaskType) -> {
+		IWorker = cheker.narrow(ITask, (TaskType) -> {
 			doWork: cheker.Function(undefined, TaskType)
-		}
-
+		})
 
 		ICustomTask = cheker.extend(ITask, {
 			getName: cheker.Function(String)
@@ -520,9 +519,6 @@ describe 'Cheker Tests', ->
 
 		expect(cheker.is.regExp(/g/)).to.be.ok()
 		expect(cheker.is.regExp(new RegExp(/g/))).to.be.ok()
-
-
-
 
 
 

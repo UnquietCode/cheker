@@ -4,7 +4,7 @@ log = (x) -> console.log(x)
 UNDEFINED = {}
 SIGNATURE_KEY = "___chekerSignature"
 
-Signature = class
+class Signature
 	constructor: (@rType, @types...) ->
 	toString: -> "#{@rType} -> #{@types}"
 
@@ -454,11 +454,6 @@ narrow = (objects..., f) ->
 		f(args...)
 
 
-_Function = (rType, types...) ->
-	return new Signature(rType, types...)
-
-Signature = Signature
-
 
 ###
 
@@ -506,6 +501,6 @@ module.exports = {
 	guard: guard
 	apply: apply
 
-	Function: _Function
+	Function: (rType, types...) -> new Signature(rType, types...)
 	Enum: Enum
 }
